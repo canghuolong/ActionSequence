@@ -1,0 +1,11 @@
+{
+  "name": "com.sun.action-sequence",
+  "version": "1.0.0",
+  "displayName": "Sun.ActionSequence",
+  "description": "Action Sequence",
+  "unity": "2019.1",
+  "author": {
+    "name": "sun"
+  },
+  "unityRelease": "0a9"
+}
