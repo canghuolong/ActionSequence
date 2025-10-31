@@ -15,11 +15,11 @@ namespace ActionSequence
         public ActionSequence Play()
         {
              TryGeneratorSequence();
-             _actionSequence.OnComplete = ClearSequence;
+             _actionSequence.onComplete = ClearSequence;
              return _actionSequence.Play();
         }
-        private void ClearSequence()
-        {
+        internal void ClearSequence()
+        { 
             _actionSequence = null;
         }
 
@@ -32,28 +32,33 @@ namespace ActionSequence
         {
             if (_actionSequence == null)
             {
-                ActionClip[] clips = new ActionClip[actionClips.Count];
+                List<ActionClip> clipList = new List<ActionClip>(actionClips.Count);
+                
                 for (int i = 0; i < actionClips.Count; i++)
                 {
+                    var actionClip = actionClips[i];
+                    if(!actionClip.isActive)continue;
                     var action =
-                        ActionSequences.CreateAction(actionClips[i].GetActionType()) as IAction<AActionClipData>;
+                        ActionSequences.CreateAction(actionClip.GetActionType()) as IAction<AActionClipData>;
                     if (action != null)
                     {
-                        action.SetParams(actionClips[i]);    
+                        action.SetParams(actionClip);    
                     }
                     else
                     {
-                        Debug.LogError($"ActionSequenceComponent: type convert error {actionClips[i].GetActionType()}");
+                        Debug.LogError($"ActionSequenceComponent: type convert error {actionClip.GetActionType()}");
                     }
-                    
-                    clips[i] = new ActionClip()
+                    clipList.Add(new ActionClip()
                     {
                         Action = action,
-                        StartTime = actionClips[i].startTime,
-                        Duration = actionClips[i].duration,
-                    };
+                        StartTime = actionClip.startTime,
+                        Duration = actionClip.duration,
+                    });
+                    
                 }
 
+                var clips = clipList.ToArray();
+                
                 if (_actionSequenceManager == null)
                 {
                     _actionSequence = ActionSequences.AddSequence(new ActionSequenceModel()

@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.UIElements;
+using Random = UnityEngine.Random;
 
 namespace ActionSequence
 {
@@ -22,6 +24,7 @@ namespace ActionSequence
         private Button _btnCtrl;
         private DropdownField _dropdownField;
         private IMGUIContainer _imguiContainer;
+        private IMGUIContainer _detailContainer;
 
         private Button _btnDelete;
         
@@ -36,6 +39,10 @@ namespace ActionSequence
         private float _totalTime = 0;
         private AActionClipData[] _clipsData;
         private AActionClipData _selectedClip;
+        private SerializedProperty _selectedClipProperty;
+        
+        private bool _isTimeDragging;
+        private bool _isClipDragging;
 
         private void PrepareData()
         {
@@ -54,14 +61,11 @@ namespace ActionSequence
             PrepareData();
             
             
+            VisualElement root = new VisualElement();
             var visualTree =
                 AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(
                     "Packages/com.sun.action-sequence/Editor/ActionSequence.uxml");
-
-            VisualElement root = new VisualElement();
-
             var tree = visualTree.CloneTree();
-
             root.Add(tree);
 
             VisualElement topGroup = tree.Q<VisualElement>("VE_TopGroup");
@@ -72,6 +76,7 @@ namespace ActionSequence
             
             _btnDelete = tree.Q<Button>("Button_Delete");
             _btnDelete.visible = false;
+            _btnDelete.clicked += DeleteClip;
 
        
             btnPlay.clicked += OnClickButton;
@@ -82,17 +87,17 @@ namespace ActionSequence
 
             _imguiContainer = tree.Q<IMGUIContainer>("VE_IMGUI"); 
             _imguiContainer.onGUIHandler += OnIMGUI;
-            _imguiContainer.style.height = EditorUtility.GetTimeHeight(_clipsData.Length);
             
-            
+            _detailContainer = tree.Q<IMGUIContainer>("VE_Detail");
+            _detailContainer.onGUIHandler += OnDetailIMGUI;
             
             var textTime = tree.Q<Label>("Text_Time");
-            _refreshTimeAction = () => { textTime.text = $"Time:{_runTime:F2}s"; };
+            _refreshTimeAction = () => { textTime.text = $"时间:{_runTime:F2}s"; };
             _refreshTimeAction?.Invoke();
 
 
             RefreshButton();
-
+            CalculateHeight();
             
             
             return root;
@@ -102,8 +107,11 @@ namespace ActionSequence
             var index = _typeNamesList.IndexOf(opt.newValue);
             if (index >= 0 && index < _typeNamesList.Count)
             {
-                 var instance = Activator.CreateInstance(_typeList[index]);
-
+                 var instance = Activator.CreateInstance(_typeList[index]) as AActionClipData;
+                 if (instance != null)
+                 {
+                     instance.color = new Color(Random.value,Random.value,Random.value);    
+                 }
                  var arraySize = _actionClipsProperty.arraySize;
                  _actionClipsProperty.InsertArrayElementAtIndex(arraySize);
                  var newProperty = _actionClipsProperty.GetArrayElementAtIndex(arraySize);
@@ -113,6 +121,10 @@ namespace ActionSequence
             } 
             //清空选择
             _dropdownField.SetValueWithoutNotify(string.Empty);
+            
+            PrepareData();
+            PrepareClipsData();
+            CalculateHeight();
         }
 
         private void OnEnable()
@@ -122,50 +134,140 @@ namespace ActionSequence
             _actionClipsProperty = serializedObject.FindProperty("actionClips");
 
             EditorApplication.update -= EditorUpdate;
-            EditorApplication.update += EditorUpdate;
+            EditorApplication.update -= RuntimeUpdate;
+            
 
             _lastUpdateTime = Time.realtimeSinceStartup;
             _runTime = 0;
-            
             _actionSequenceComponent = (ActionSequenceComponent)target;
-            _actionSequenceComponent.SetActionSequenceManager(_editorManager);
+            
+            
+            if (!EditorApplication.isPlaying)
+            {
+                EditorApplication.update += EditorUpdate;
+                _actionSequenceComponent.SetActionSequenceManager(_editorManager);    
+            }
+            else
+            {
+                EditorApplication.update += RuntimeUpdate;
+                _actionSequenceComponent.SetActionSequenceManager(null);
+            }
         }
+
+
 
         private void OnDisable()
         {
+            _actionSequenceComponent.ClearSequence();
             EditorApplication.update -= EditorUpdate;
+            EditorApplication.update -= RuntimeUpdate;
             _timeController?.Dispose();
         }
 
         private void EditorUpdate()
         {
-            float currentTime = Time.realtimeSinceStartup;
-            float deltaTime = currentTime - _lastUpdateTime;
-            _lastUpdateTime = currentTime;
-            
-            
-            
             if (_status == Status.Playing)
             {
+
+                float current = _runTime;
+                
+                float deltaTime = current - _lastUpdateTime;
+                _lastUpdateTime = current;
+                
                 _editorManager?.Tick(deltaTime);
                 _runTime += deltaTime;    
             }
             _refreshTimeAction?.Invoke();
         }
 
+        private void RuntimeUpdate()
+        {
+            
+        }
+        
+
         private void OnIMGUI()
         {
-            var scaledTime = 1 / _totalTime;
+            var timeScaled = 1 / _totalTime;
             var curScaledTime = _runTime / _totalTime;
-            var timeRect = EditorUtility.DrawTime(_imguiContainer.contentRect,  scaledTime, ref _isDragging, OnDragStart, OnDragEnd);
+            bool dragStarted = false;
+            var timeRect = EditorUtility.DrawTime(_imguiContainer.contentRect,  timeScaled, ref _isTimeDragging, (() =>
+            {
+                OnDragStart();
+                dragStarted = true;
+            }), OnDragEnd);
 
-            EditorUtility.DrawClips(_imguiContainer.contentRect,_clipsData,scaledTime,_selectedClip,ref _isDragging,OnClipSelected);
             
+
+            if (_isTimeDragging)
+            {
+                var dragScaledTime = EditorUtility.GetScaledTimeUnderMouse(timeRect);
+                var rawTime = dragScaledTime / timeScaled;
+                
+                
+                // DottGUI.TimeVerticalLine(timeRect.Add(tweensRect), scaledTime, underLabel: true);
+                // DottGUI.PlayheadLabel(timeRect, scaledTime, rawTime);
+
+                if (Event.current.type is EventType.MouseDrag || dragStarted)
+                {
+                    _runTime = rawTime;
+                }
+            }
+            
+            EditorUtility.DrawClips(_imguiContainer.contentRect,_clipsData,timeScaled,_selectedClip,ref _isClipDragging,OnClipSelected);
             EditorUtility.TimeVerticalLine(_imguiContainer.contentRect, curScaledTime, true);
             EditorUtility.PlayheadLabel(timeRect,curScaledTime, _runTime);
+            
         }
 
-        private bool _isDragging;
+        private void OnDetailIMGUI()
+        {
+            if (_selectedClipProperty != null)
+            {
+                var splitLineRect = _detailContainer.contentRect;
+                splitLineRect.height = 4f;
+                
+                EditorGUI.DrawRect(splitLineRect, Color.cyan);
+                GUILayout.Space(8f);
+                
+                EditorGUI.BeginChangeCheck();
+
+                EditorGUILayout.BeginHorizontal();
+                using (new EditorLabelWidthScope(60f))
+                {
+                    var startTimeProperty = _selectedClipProperty.FindPropertyRelative("startTime");
+                    startTimeProperty.floatValue = EditorGUILayout.FloatField("开始时间:",startTimeProperty.floatValue,
+                        GUILayout.MaxWidth(200f));
+                    startTimeProperty.floatValue = Math.Max(0, startTimeProperty.floatValue);
+                    
+                    GUILayout.Space(8f);
+                    
+                    var durationProperty = _selectedClipProperty.FindPropertyRelative("duration");
+                    durationProperty.floatValue = EditorGUILayout.FloatField("时长:", durationProperty.floatValue,
+                        GUILayout.MaxWidth(200f));
+                    durationProperty.floatValue = Math.Max(0, durationProperty.floatValue);
+                    
+                    GUILayout.Space(8f);
+                    var activeProperty = _selectedClipProperty.FindPropertyRelative("isActive");
+                    activeProperty.boolValue = EditorGUILayout.Toggle("激活:", activeProperty.boolValue);
+                }
+                EditorGUILayout.EndHorizontal();
+                
+                GUILayout.Space(8f);
+
+                EditorGUILayout.PropertyField(_selectedClipProperty);
+                
+                if (EditorGUI.EndChangeCheck())
+                {    
+                    _selectedClipProperty.serializedObject.ApplyModifiedProperties(); 
+                    _selectedClipProperty.serializedObject.Update();
+                    
+                    CalculateTotalTime();
+                }
+            }
+        }
+
+        
         private void OnDragStart()
         {
             
@@ -176,12 +278,66 @@ namespace ActionSequence
             
         }
 
+        private void SetSelectedClip(AActionClipData selectedClip)
+        {
+            _selectedClip = selectedClip;
+            if (selectedClip != null)
+            {
+                _detailContainer.style.height = 200;
+                for (var i = 0; i < _clipsData.Length; i++)
+                {
+                    if(_selectedClip == _clipsData[i])
+                    {
+                        _selectedClipProperty = _actionClipsProperty.GetArrayElementAtIndex(i);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                _selectedClipProperty = null;
+            }
+            _detailContainer.visible = _selectedClip != null;
+            RefreshDeleteButton();
+        }
         
         private void OnClipSelected(AActionClipData selectedClip)
         {
-            _selectedClip = selectedClip;
+            SetSelectedClip(selectedClip);
         }
-        
+
+        private void RefreshDeleteButton()
+        {
+            _btnDelete.visible = _selectedClip != null;
+        }
+        private void DeleteClip()
+        {
+            Assert.IsNotNull(_selectedClip, "SelectedClip is null");
+            int index = -1;
+            for (var i = 0; i < _clipsData.Length; i++)
+            {
+                var v = _clipsData[i];
+                if (v == _selectedClip)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1)
+            {
+                _actionClipsProperty.DeleteArrayElementAtIndex(index);
+                _actionClipsProperty.serializedObject.ApplyModifiedProperties();
+                _actionClipsProperty.serializedObject.Update();
+            }
+
+            PrepareClipsData();
+            CalculateTotalTime();
+            
+            SetSelectedClip(null);
+            CalculateHeight();
+            
+        }
         
         
         private void PrepareClipsData()
@@ -197,11 +353,17 @@ namespace ActionSequence
 
         private void CalculateTotalTime()
         {
+            _totalTime = 0f;
             for (int i = 0; i < _actionClipsProperty.arraySize; i++)
             {
                 var clipData = (AActionClipData)_actionClipsProperty.GetArrayElementAtIndex(i).managedReferenceValue;
                 _totalTime = Mathf.Max(_totalTime, clipData.startTime + clipData.duration);
             }
+        }
+
+        private void CalculateHeight()
+        {
+            _imguiContainer.style.height = EditorUtility.GetTimeHeight(_clipsData.Length);
         }
         
 
@@ -232,7 +394,10 @@ namespace ActionSequence
             _status = status;
             if(_status == Status.Playing)
             {
-                _actionSequenceComponent.Play();
+                _actionSequenceComponent.Play().OnComplete(() =>
+                {
+                    Debug.Log("PlayDone!");
+                });
             }
         }
         
@@ -252,6 +417,7 @@ namespace ActionSequence
         {
             Playing,
             Stop,
+            Pause,
         }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine.Events;
 namespace ActionSequence
 {
     [Serializable]
-    public class UnityEventClipData : AActionClipData
+    public class UnityEventClipData : AActionClipData<UnityEventAction>
     {
         public UnityEvent unityEvent;
 

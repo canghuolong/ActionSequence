@@ -6,6 +6,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="VE_Split" style="height: 2px; background-color: rgb(0, 0, 0);" />
         <ui:IMGUIContainer name="VE_IMGUI" style="background-color: rgb(56, 56, 56);" />
+        <ui:IMGUIContainer name="VE_Detail" style="background-color: rgb(56, 56, 56); border-top-width: 2px;" />
         <ui:VisualElement name="VE_Operate" style="height: 30px; flex-direction: row; background-color: rgb(56, 56, 56); flex-wrap: nowrap; justify-content: space-between; border-top-width: 2px; border-right-width: 0; border-bottom-width: 0; border-left-width: 0; border-left-color: rgb(42, 42, 42); border-right-color: rgb(42, 42, 42); border-top-color: rgb(42, 42, 42); border-bottom-color: rgb(42, 42, 42);">
             <ui:DropdownField label="+" name="Dropdown_Add" style="width: 80px; -unity-text-align: upper-right; -unity-font-style: normal; font-size: 12px; justify-content: flex-end; align-items: auto; flex-wrap: nowrap; overflow: hidden; opacity: 1; margin-right: 1px; margin-left: 1px; padding-top: 0;" />
             <ui:Button text="Delete" display-tooltip-when-elided="true" name="Button_Delete" style="align-items: auto; -unity-text-align: middle-left; white-space: nowrap; right: auto; position: relative; visibility: visible; overflow: visible; flex-direction: row-reverse; justify-content: space-around;" />

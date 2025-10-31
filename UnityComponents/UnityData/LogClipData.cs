@@ -4,13 +4,10 @@ using UnityEngine;
 namespace ActionSequence
 {
     [Serializable]
-    public class LogClipData : AActionClipData
+    public class LogClipData : AActionClipData<LogAction>
     {
+        [ExposedField]
         public string prefix;
-        public override Type GetActionType()
-        {
-            return typeof(LogAction);
-        }
     }
     public class LogAction : IPoolAction<LogClipData>,IStartAction,IUpdateAction
     {
@@ -30,7 +27,7 @@ namespace ActionSequence
             Debug.Log($"{_clipData.prefix} LogAction Start");
         }
 
-        public void Update(float localTime)
+        public void Update(float localTime, float totalTime)
         {
             Debug.Log($"{_clipData.prefix} LogAction Update {localTime}");
         }
