@@ -12,48 +12,72 @@ namespace ActionSequence
 
         private ActionSequenceManager _actionSequenceManager;
         
+        public ActionSequence ActionSequence => _actionSequence;
+        
         public ActionSequence Play()
         {
-             TryGeneratorSequence();
-             _actionSequence.OnComplete = ClearSequence;
-             return _actionSequence.Play();
+            if (TryGeneratorSequence())
+            {
+                 _actionSequence.internalComplete += InternalStop;
+            }
+            return !_actionSequence.IsPlaying ? _actionSequence.Play() : _actionSequence;
         }
-        private void ClearSequence()
+        
+        internal void Stop()
         {
+            if (_actionSequence is { IsActive: true })
+            {
+                _actionSequence.Kill();    
+            }
+            _actionSequence = null;
+        }
+
+        private void InternalStop()
+        {
+            if (_actionSequence is { IsActive: true })
+            {
+                _actionSequence.Kill();    
+            }
             _actionSequence = null;
         }
 
         private void OnDestroy()
         {
             _actionSequence?.Kill();
+            _actionSequence = null;
         }
 
-        private void TryGeneratorSequence()
+        private bool TryGeneratorSequence()
         {
             if (_actionSequence == null)
             {
-                ActionClip[] clips = new ActionClip[actionClips.Count];
+                List<ActionClip> clipList = new List<ActionClip>(actionClips.Count);
+                
                 for (int i = 0; i < actionClips.Count; i++)
                 {
+                    var actionClip = actionClips[i];
+                    if(!actionClip.isActive)continue;
                     var action =
-                        ActionSequences.CreateAction(actionClips[i].GetActionType()) as IAction<AActionClipData>;
+                        ActionSequences.CreateAction(actionClip.GetActionType()) as IAction<AActionClipData>;
                     if (action != null)
                     {
-                        action.SetParams(actionClips[i]);    
+                        action.SetParams(actionClip);    
                     }
                     else
                     {
-                        Debug.LogError($"ActionSequenceComponent: type convert error {actionClips[i].GetActionType()}");
+                        Debug.LogError($"ActionSequenceComponent: type convert error {actionClip.GetActionType()}");
                     }
-                    
-                    clips[i] = new ActionClip()
+                    clipList.Add(new ActionClip()
                     {
                         Action = action,
-                        StartTime = actionClips[i].startTime,
-                        Duration = actionClips[i].duration,
-                    };
+                        StartTime = actionClip.startTime,
+                        Duration = actionClip.duration,
+                    });
+                    
                 }
 
+                var clips = clipList.ToArray();
+                
                 if (_actionSequenceManager == null)
                 {
                     _actionSequence = ActionSequences.AddSequence(new ActionSequenceModel()
@@ -68,8 +92,11 @@ namespace ActionSequence
                         clips = clips
                     },null,null);
                 }
-                
+
+                return true;
             }
+
+            return false;
         }
         
         public void SetActionSequenceManager(ActionSequenceManager manager)

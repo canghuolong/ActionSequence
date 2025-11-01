@@ -45,7 +45,7 @@ namespace ActionSequence
             _list.Clear();
         }
         
-        public static void Tick(float deltaTime){
+        internal static void Tick(float deltaTime){
             for (int i = 0; i < _list.Count; i++)
             {
                 _list[i].Tick(deltaTime);
@@ -95,6 +95,11 @@ namespace ActionSequence
             EnsureInitialized();
             EnsureDefaultSequenceManager();
             return _defaultSequenceManager.AddSequence(model, owner, source);
+        }
+        
+        public static ActionSequence AddSequence(string sequenceManagerName, ActionSequenceModel model, object owner = null, object source = null)
+        {
+            return GetActionSequenceManager(sequenceManagerName).AddSequence(model, owner, source);
         }
         
         private static void EnsureDefaultSequenceManager()

@@ -35,7 +35,8 @@ namespace ActionSequence
 
         public object Param;
 
-        public Action OnComplete; 
+        public Action onComplete;
+        internal Action internalComplete; 
         
         private List<TimeAction> _actions = new();
         
@@ -120,10 +121,11 @@ namespace ActionSequence
                 float startTime = action.StartTime;
                 float endTime = startTime + action.Duration;
 
-                if (startTime > wasTimeElapsed && startTime <= TimeElapsed )
+                if (startTime >= wasTimeElapsed && startTime <= TimeElapsed )
                 {
-                    if (action.Action is IStartAction startAction)
+                    if (action.Action is IStartAction startAction && !action.IsStarted)
                     {
+                        action.IsStarted = true;
                         startAction.Start();
                     }
                 }
@@ -132,7 +134,7 @@ namespace ActionSequence
                 {
                     if (action.Action is IUpdateAction updateAction)
                     {
-                        updateAction.Update(TimeElapsed - startTime);
+                        updateAction.Update(TimeElapsed - startTime,action.Duration);
                     }
                 }
                 
@@ -140,7 +142,7 @@ namespace ActionSequence
                 {
                     if (action.Action is IUpdateAction updateAction)
                     {
-                        updateAction.Update(action.Duration);
+                        updateAction.Update(action.Duration,action.Duration);
                     }
 
                     if (action.Action is ICompleteAction completeAction)
@@ -157,7 +159,8 @@ namespace ActionSequence
                 IsComplete = true;
                 IsPlaying = false;
                 IsActive = false;
-                OnComplete?.Invoke();
+                internalComplete?.Invoke();
+                onComplete?.Invoke();
             }
         }
 
@@ -173,13 +176,20 @@ namespace ActionSequence
             _timeScale = 1f;
             TimeElapsed = 0f;
             TotalDuration = 0f;
-            OnComplete = null;
+            onComplete = null;
+            internalComplete = null;
             _sequenceManager = null;
         }
 
         public void Kill()
         {
             IsActive = false;
+        }
+        
+        public ActionSequence OnComplete(Action complete)
+        {
+            onComplete = complete;
+            return this;
         }
 
 
@@ -188,7 +198,8 @@ namespace ActionSequence
             public IAction Action;
             public float StartTime;
             public float Duration;
-            
+
+            public bool IsStarted;
             public bool IsComplete;
 
             public TimeAction()
@@ -199,6 +210,7 @@ namespace ActionSequence
             public void Reset()
             {
                 IsComplete = false;
+                IsStarted = false;
                 Action?.Reset();
                 Action = null;
             }

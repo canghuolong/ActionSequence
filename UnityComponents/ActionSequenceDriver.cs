@@ -2,7 +2,7 @@
 
 namespace ActionSequence
 {
-    public class ActionSequenceDriver : MonoBehaviour
+    internal class ActionSequenceDriver : MonoBehaviour
     {
         private void Update()
         {
