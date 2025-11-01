@@ -11,7 +11,7 @@
     }
     public interface IUpdateAction
     {
-        void Update(float localTime);
+        void Update(float localTime,float totalTime);
     }
     public interface IStartAction
     {

@@ -13,7 +13,7 @@ namespace ActionSequence
             StartAct?.Invoke();
         }
 
-        public void Update(float localTime)
+        public void Update(float localTime,float totalTime)
         {
             UpdateAct?.Invoke(localTime);
         }

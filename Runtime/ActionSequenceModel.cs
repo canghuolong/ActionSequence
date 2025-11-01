@@ -1,4 +1,4 @@
-﻿namespace ActionSequence
+namespace ActionSequence
 {
     public struct ActionSequenceModel
     {

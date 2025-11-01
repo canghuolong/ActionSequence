@@ -18,7 +18,7 @@ namespace ActionSequence
             return TIME_HEIGHT + ROW_HEIGHT * clipCount;
         }
 
-        public static Rect DrawTime(Rect rect, float timeScale, ref bool isDragging, Action start, Action<Event> end)
+        public static Rect DrawTime(Rect rect, float timeScale, ref bool isDragging, Action startAction, Action<Event> endAction)
         {
             rect = rect.SetHeight(TIME_HEIGHT);
 
@@ -29,19 +29,36 @@ namespace ActionSequence
 
             const int count = 10;
             const float step = 1f / count;
+
             for (var i = 0; i < count; i++)
             {
                 var time = i * step;
                 var position = new Rect(rect.x + i * step * rect.width, rect.y, step * rect.width, rect.height);
                 time /= timeScale;
+
+                var linePosition = position;
+
+                linePosition.width = 1f;
+                linePosition.y += 8f;
+                linePosition.height -= 8f;
+                EditorGUI.DrawRect(linePosition, new Color(1,1,1,0.75f));
+                position.x += linePosition.width;
+                position.width -= linePosition.width;
                 GUI.Label(position, time.ToString("0.00"), style);
+
+                //显示终点时间
+                if (i == count - 1)
+                {
+                    time = count * step / timeScale;
+                    GUI.Label(position, time.ToString("0.00"), new GUIStyle(style) { alignment = TextAnchor.MiddleRight });
+                }
             }
 
             var bottomLine = new Rect(rect.x, rect.y + rect.height, rect.width, 1);
             EditorGUI.DrawRect(bottomLine, Color.black);
             EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
 
-            ProcessDragEvents(rect, ref isDragging, start, end);
+            ProcessDragEvents(rect, ref isDragging, startAction, endAction);
 
             return rect;
         }
@@ -196,6 +213,13 @@ namespace ActionSequence
         private static float CalculateX(Rect rowRect, float time, float timeScale)
         {
             return rowRect.x + time * timeScale * rowRect.width;
+        }
+        
+        public static float GetScaledTimeUnderMouse(Rect timeRect)
+        {
+            var time = (Event.current.mousePosition.x - timeRect.x) / timeRect.width;
+            time = Mathf.Clamp01(time);
+            return time;
         }
     }
 }
