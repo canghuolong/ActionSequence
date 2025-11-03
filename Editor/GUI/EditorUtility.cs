@@ -1,5 +1,4 @@
 ﻿using System;
-using DG.DemiEditor;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
