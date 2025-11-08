@@ -38,8 +38,7 @@ namespace ActionSequence
         private readonly List<string> _typeNamesList = new();
 
         private SerializedProperty _actionClipsProperty;
-
-        private TimeController _timeController = null;
+        
         private float _totalTime = 0;
         private AActionClipData[] _clipsData;
         private AActionClipData _selectedClip;
@@ -147,7 +146,6 @@ namespace ActionSequence
         private void OnEnable()
         {
             _editorManager = new ActionSequenceManager();
-            _timeController = new TimeController();
             _actionClipsProperty = serializedObject.FindProperty("actionClips");
 
             EditorApplication.update -= EditorUpdate;
@@ -176,7 +174,6 @@ namespace ActionSequence
             _actionSequenceComponent.Stop();
             EditorApplication.update -= EditorUpdate;
             EditorApplication.update -= RuntimeUpdate;
-            _timeController?.Dispose();
         }
 
         private void EditorUpdate()
