@@ -18,8 +18,8 @@ namespace ActionSequence
         private static GameObject _driver;
 
         private static bool _initialized;
-        
-        public static void Initialize()
+
+        private static void Initialize()
         {
             if (_initialized)
             {
@@ -27,6 +27,13 @@ namespace ActionSequence
             }
 
             _driver = new GameObject($"[{nameof(ActionSequences)}]");
+
+            var runningSequencesRoot = new GameObject("[Running Sequences]");
+            runningSequencesRoot.transform.SetParent(_driver.transform);
+
+            var poolRoot = new GameObject("[Pool]");
+            poolRoot.transform.SetParent(_driver.transform);
+            
             _driver.AddComponent<ActionSequenceDriver>();
             Object.DontDestroyOnLoad(_driver);
 
@@ -82,6 +89,13 @@ namespace ActionSequence
             }
             return null;
         }
+        
+        public static ActionSequenceManager GetDefaultActionSequenceManager()
+        {
+            EnsureInitialized();
+            EnsureDefaultSequenceManager();
+            return _defaultSequenceManager;
+        }
 
         public static object CreateAction(Type type)
         {
@@ -101,6 +115,11 @@ namespace ActionSequence
         {
             return GetActionSequenceManager(sequenceManagerName).AddSequence(model, owner, source);
         }
+
+        internal static List<ActionSequenceManager> GetActionSequenceManagers()
+        {
+            return _list;
+        }
         
         private static void EnsureDefaultSequenceManager()
         {
@@ -116,7 +135,10 @@ namespace ActionSequence
             {
                 Initialize();    
             }
+            #else
+            Initialize();
             #endif
+            
         }
         
         

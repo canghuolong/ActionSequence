@@ -82,6 +82,7 @@ namespace ActionSequence
                 {
                     _actionSequence = ActionSequences.AddSequence(new ActionSequenceModel()
                     {
+                        id = $"ActionSequenceComponent_{gameObject.name}",
                         clips = clips
                     });    
                 }
@@ -89,6 +90,7 @@ namespace ActionSequence
                 {
                     _actionSequence = _actionSequenceManager.AddSequence(new ActionSequenceModel()
                     {
+                        id = $"ActionSequenceComponent_{gameObject.name}",
                         clips = clips
                     },null,null);
                 }

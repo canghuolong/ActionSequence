@@ -6,6 +6,8 @@ namespace ActionSequence
     public class ActionSequenceManager : IDisposable
     {
         public readonly string Name;
+
+        internal List<ActionSequence> Sequences => _sequences;
         
         private readonly List<ActionSequence> _sequences = new();
         
@@ -45,7 +47,7 @@ namespace ActionSequence
         public ActionSequence AddSequence(ActionSequenceModel model, object owner, object source)
         {
             var sequence = Fetch<ActionSequence>();
-            
+            sequence.Id = model.id;
             sequence.Init(this).InitNodes(model.clips).SetOwner(owner).SetParam(source).Active();
             _sequences.Add(sequence);
             return sequence;

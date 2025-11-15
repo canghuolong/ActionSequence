@@ -27,7 +27,7 @@ namespace ActionSequence
             Debug.Log($"{_clipData.prefix} LogAction Start");
         }
 
-        public void Update(float localTime, float totalTime)
+        public void Update(float localTime, float duration)
         {
             Debug.Log($"{_clipData.prefix} LogAction Update {localTime}");
         }

@@ -14,6 +14,8 @@ namespace ActionSequence
         
         public bool IsActive { internal set; get; }
         
+        public string Id { get;  internal set; }
+        
         
         
         private float _timeScale;
@@ -36,7 +38,7 @@ namespace ActionSequence
         public object Param;
 
         public Action onComplete;
-        internal Action internalComplete; 
+        internal Action internalComplete;
         
         private List<TimeAction> _actions = new();
         
@@ -47,7 +49,6 @@ namespace ActionSequence
             Reset();
         }
         
-
         public ActionSequence SetOwner(object owner)
         {
             Owner = owner;
@@ -59,7 +60,7 @@ namespace ActionSequence
             return this;
         }
 
-        public ActionSequence Init(ActionSequenceManager sequenceManager)
+        internal ActionSequence Init(ActionSequenceManager sequenceManager)
         {
             _sequenceManager = sequenceManager;
             return this;
