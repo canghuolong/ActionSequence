@@ -1,0 +1,52 @@
+- name: 首页
+  href: index.md
+- name: 快速开始
+  href: guides/quick-start.md
+- name: 安装
+  href: guides/installation.md
+- name: 使用指南
+  items:
+    - name: 基础概念
+      href: guides/concepts.md
+    - name: 代码方式使用
+      href: guides/code-usage.md
+    - name: 组件方式使用
+      href: guides/component-usage.md
+    - name: 高级特性
+      href: guides/advanced-features.md
+    - name: 性能优化
+      href: guides/performance-optimization.md
+    - name: 最佳实践
+      href: guides/best-practices.md
+- name: API 参考
+  href: api/
+- name: 示例代码
+  items:
+    - name: 基础示例
+      href: examples/01-basic-examples.md
+    - name: 扩展方法示例
+      href: examples/02-extension-method-examples.md
+    - name: UI 动画示例
+      href: examples/03-ui-animation-examples.md
+    - name: 游戏逻辑示例
+      href: examples/04-game-logic-examples.md
+    - name: 自定义动作示例
+      href: examples/05-custom-action-examples.md
+- name: 开发者资源
+  items:
+    - name: 架构设计
+      href: architecture.md
+    - name: 设计决策
+      href: design-decisions.md
+    - name: 扩展开发指南
+      href: extension-development-guide.md
+- name: 帮助与支持
+  items:
+    - name: FAQ
+      href: faq.md
+    - name: 故障排除
+      href: troubleshooting.md
+    - name: 迁移指南
+      href: guides/migration-guide.md
+- name: 更新日志
+  href: CHANGELOG.md
