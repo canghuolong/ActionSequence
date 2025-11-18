@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class Extensions 
     {
@@ -33,5 +33,34 @@ namespace ActionSequence
             },null,null);
             return actionSequence.Play();
         }
+
+        public static ActionSequence Append(this ActionSequence self,IAction action, float startTime,float duration = 0f)
+        {
+            self.AddClip(new ActionClip()
+            {
+                StartTime = startTime,
+                Duration = duration,
+                Action = action,
+            });
+            return self;
+        }
+        
+        public static ActionSequence Delay(this ActionSequence self,float delayTime,Action callback)
+        {
+            var callbackAction = self.SequenceManager.Fetch<CallbackAction>();
+            callbackAction.Action = callback;
+            return self.Append(callbackAction, delayTime).Play();
+        }
+
+        public static ActionSequence DoValue(this ActionSequence self,float startTime,float duration,Action startAction=null,
+            Action<float,float> updateAction = null,Action completeAction = null)
+        {
+            var genericAction = self.SequenceManager.Fetch<GenericAction>();
+            genericAction.StartAct = startAction;
+            genericAction.UpdateAct = updateAction;
+            genericAction.CompleteAct = completeAction;
+            return self.Append(genericAction, startTime, duration).Play();
+        }
+        
     }
 }

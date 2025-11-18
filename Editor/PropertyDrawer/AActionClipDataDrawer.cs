@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     [CustomPropertyDrawer(typeof(AActionClipData))]
     public class ActionClipDataPropertyDrawer : PropertyDrawer

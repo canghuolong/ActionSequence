@@ -22,7 +22,7 @@ Transform 是 Unity 中最常用的组件之一。为 Transform 创建扩展方�
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class TransformExtensions
     {
@@ -155,7 +155,7 @@ public class MoveExample : MonoBehaviour
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class TransformExtensions
     {
@@ -252,7 +252,7 @@ public class RotateExample : MonoBehaviour
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class TransformExtensions
     {
@@ -348,7 +348,7 @@ public class ScaleExample : MonoBehaviour
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class TransformExtensions
     {
@@ -438,7 +438,7 @@ Unity 的 Animation 组件用于播放动画剪辑。为 Animation 创建扩展�
 using System;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class Extensions 
     {
@@ -522,7 +522,7 @@ using System;
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class AnimationExtensions
     {
@@ -679,7 +679,7 @@ public class AnimationChainExample : MonoBehaviour
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class RectTransformExtensions
     {
@@ -800,7 +800,7 @@ public class UIAnimationExample : MonoBehaviour
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class CanvasGroupExtensions
     {
@@ -907,7 +907,7 @@ public class FadeExample : MonoBehaviour
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class AudioSourceExtensions
     {
@@ -1022,7 +1022,7 @@ public class AudioFadeExample : MonoBehaviour
 using ActionSequence;
 using UnityEngine;
 
-namespace ActionSequence.Extensions
+namespace ASQ.Extensions
 {
     public static partial class SpriteRendererExtensions
     {

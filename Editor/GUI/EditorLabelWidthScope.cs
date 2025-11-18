@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEditor;
 
-namespace ActionSequence
+namespace ASQ
 {
     public class EditorLabelWidthScope : IDisposable
     {

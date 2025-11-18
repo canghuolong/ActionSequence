@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     [Serializable]
     public abstract class AActionClipData

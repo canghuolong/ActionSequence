@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -7,7 +6,7 @@ using Object = UnityEngine.Object;
 using UnityEditor;
 #endif
 
-namespace ActionSequence
+namespace ASQ
 {
     public static class ActionSequences
     {
@@ -18,6 +17,13 @@ namespace ActionSequence
         private static GameObject _driver;
 
         private static bool _initialized;
+        
+        #if ENABLE_VIEW && UNITY_EDITOR
+
+        public static Transform DebugRoot { private set; get; }
+        
+        #endif
+        
 
         private static void Initialize()
         {
@@ -28,16 +34,21 @@ namespace ActionSequence
 
             _driver = new GameObject($"[{nameof(ActionSequences)}]");
 
-            var runningSequencesRoot = new GameObject("[Running Sequences]");
-            runningSequencesRoot.transform.SetParent(_driver.transform);
-
-            var poolRoot = new GameObject("[Pool]");
-            poolRoot.transform.SetParent(_driver.transform);
+            DebugRoot = _driver.transform;
+            
             
             _driver.AddComponent<ActionSequenceDriver>();
             Object.DontDestroyOnLoad(_driver);
 
             _initialized = true;
+            Application.quitting -= OnQuit;
+            Application.quitting += OnQuit;
+        }
+
+        private static void OnQuit()
+        {
+            Application.quitting -= OnQuit;
+            Destroy();
         }
 
         public static void Destroy()
@@ -96,26 +107,6 @@ namespace ActionSequence
             EnsureDefaultSequenceManager();
             return _defaultSequenceManager;
         }
-
-        public static object CreateAction(Type type)
-        {
-            EnsureDefaultSequenceManager();
-            return _defaultSequenceManager.Fetch(type);
-        }
-        
-        
-        public static ActionSequence AddSequence(ActionSequenceModel model, object owner = null, object source = null)
-        {
-            EnsureInitialized();
-            EnsureDefaultSequenceManager();
-            return _defaultSequenceManager.AddSequence(model, owner, source);
-        }
-        
-        public static ActionSequence AddSequence(string sequenceManagerName, ActionSequenceModel model, object owner = null, object source = null)
-        {
-            return GetActionSequenceManager(sequenceManagerName).AddSequence(model, owner, source);
-        }
-
         internal static List<ActionSequenceManager> GetActionSequenceManagers()
         {
             return _list;
@@ -140,7 +131,5 @@ namespace ActionSequence
             #endif
             
         }
-        
-        
     }
 }

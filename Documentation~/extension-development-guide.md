@@ -253,7 +253,7 @@ public class MyCustomClipData : AActionClipData<MyCustomAction>
 #### 扩展点定义
 
 ```csharp
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class Extensions
     {
@@ -271,7 +271,7 @@ namespace ActionSequence
 #### 扩展方法模板
 
 ```csharp
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class Extensions
     {
@@ -625,7 +625,7 @@ public class CameraShakeAction : IAction, IAction<AActionClipData>,
 #### 扩展方法实现
 
 ```csharp
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class Extensions
     {
@@ -1034,7 +1034,7 @@ var action = new MyAction();  // 每次创建新对象
 
 ```csharp
 // File1.cs
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class Extensions
     {
@@ -1046,7 +1046,7 @@ namespace ActionSequence
 }
 
 // File2.cs
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class Extensions
     {

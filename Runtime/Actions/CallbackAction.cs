@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ActionSequence
+namespace ASQ
 {
     public class CallbackAction : IAction,IStartAction, IModifyDuration,IPool
     {
@@ -14,6 +14,7 @@ namespace ActionSequence
         
         public void Reset()
         {
+            Action = null;
         }
 
 

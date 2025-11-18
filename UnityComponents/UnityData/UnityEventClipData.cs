@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.Events;
 
-namespace ActionSequence
+namespace ASQ
 {
     [Serializable]
     public class UnityEventClipData : AActionClipData<UnityEventAction>
@@ -14,14 +14,14 @@ namespace ActionSequence
         }
     }
     
-    public class UnityEventAction : IPoolAction<UnityEventClipData>,IStartAction
+    public class UnityEventAction : IAction, IPool, IParam,IStartAction
     {
         private UnityEventClipData _param;
         
         
         public void SetParams(object param)
         {
-            _param = (UnityEventClipData)param;
+            _param = param as UnityEventClipData;
         }
         
         public void Start()
@@ -31,6 +31,7 @@ namespace ActionSequence
         
         public void Reset()
         {
+            _param = null;
         }
 
 

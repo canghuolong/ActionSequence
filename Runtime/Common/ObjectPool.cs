@@ -3,11 +3,12 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace ActionSequence
+namespace ASQ
 {
     internal interface IPool
     {
         bool IsFromPool { get; set; }
+        void Reset();
     }
     
     internal class ObjectPool
@@ -25,7 +26,7 @@ namespace ActionSequence
         {
             if (!isFromPool)
             {
-                return Activator.CreateInstance(type);
+                return Activator.CreateInstance(type,true);
             }
 
             Pool pool = GetPool(type);
@@ -40,21 +41,13 @@ namespace ActionSequence
 
         public void Recycle(object obj)
         {
-            if (obj is IPool p)
-            {
-                if (!p.IsFromPool)
-                {
-                    return;
-                }
-
-                // 防止多次入池
-                p.IsFromPool = false;
-            }
-            else
+            if (obj is not IPool { IsFromPool: true } p)
             {
                 return;
             }
-
+            // 防止多次入池
+            p.IsFromPool = false;
+            p.Reset();
             Type type = obj.GetType();
             Pool pool = GetPool(type);
             pool.Return(obj);
@@ -94,7 +87,7 @@ namespace ActionSequence
                         return item;
                     }
 
-                    return Activator.CreateInstance(this.ObjectType);
+                    return Activator.CreateInstance(this.ObjectType, true);
                 }
 
                 return item;

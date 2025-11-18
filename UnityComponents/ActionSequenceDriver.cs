@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     internal class ActionSequenceDriver : MonoBehaviour
     {

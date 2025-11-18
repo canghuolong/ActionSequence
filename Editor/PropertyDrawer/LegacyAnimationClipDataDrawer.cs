@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     [CustomPropertyDrawer(typeof(LegacyAnimationClipData))]
     public class LegacyAnimationClipDataDrawer : ActionClipDataPropertyDrawer

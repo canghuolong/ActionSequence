@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     [Serializable]
     public class LegacyAnimationClipData : AActionClipData<LegacyAnimationAction>
@@ -13,7 +13,7 @@ namespace ActionSequence
         public string clipName;
 
     }
-    public class LegacyAnimationAction : IPoolAction<LegacyAnimationClipData>,IStartAction,IUpdateAction,ICompleteAction
+    public class LegacyAnimationAction : IAction,IPool,IParam,IStartAction,IUpdateAction,ICompleteAction
     {
         private LegacyAnimationClipData _clipClipData;
 

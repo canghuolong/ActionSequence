@@ -1,4 +1,4 @@
-﻿namespace ActionSequence
+﻿namespace ASQ
 {
     public struct ActionClip
     {

@@ -1,8 +1,20 @@
-﻿namespace ActionSequence
+﻿namespace ASQ
 {
+    
+    public interface IAction
+    {
+    }
+    
     public interface IModifyDuration
     {
         float Duration { get;}
+    }
+
+    public interface ICustomComplete : IModifyDuration
+    {
+        float IModifyDuration.Duration => float.PositiveInfinity;
+
+        bool CanComplete{get; set; }
     }
     
     public interface ICompleteAction
@@ -17,22 +29,10 @@
     {
         void Start();
     }
-    
-    
-    public interface IAction
-    {
-        void Reset();
 
-    }
-    
-    public interface IAction<out T> : IAction
+    public interface IParam
     {
         public void SetParams(object param);
     }
 
-    internal interface IPoolAction<out T> : IAction<T>, IPool
-    {
-        
-    }
-    
 }

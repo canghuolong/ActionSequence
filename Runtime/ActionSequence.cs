@@ -1,21 +1,24 @@
 using System;
 using System.Collections.Generic;
 
-namespace ActionSequence
+namespace ASQ
 {
     /// <summary>
-    /// Timeline实例
+    /// ActionSequence 实例
     /// </summary>
     public class ActionSequence : IPool
     {
         public bool IsFromPool { get; set; }
+
+        public bool IsDisposed => InstanceId == -1;
         public bool IsPlaying {internal set; get; }
         public bool IsComplete { private set; get; }
-        
-        public bool IsActive { internal set; get; }
+        public bool HasError { private set; get; }
+        public Exception LastException { private set; get; }
         
         public string Id { get;  internal set; }
         
+        public int InstanceId { internal set; get; }
         
         
         private float _timeScale;
@@ -38,15 +41,17 @@ namespace ActionSequence
         public object Param;
 
         public Action onComplete;
+        public Action<Exception> onError;
         internal Action internalComplete;
         
-        private List<TimeAction> _actions = new();
+        private readonly List<TimeAction> _timeActions = new();
         
+        public ActionSequenceManager SequenceManager => _sequenceManager;
         private ActionSequenceManager _sequenceManager; 
 
-        public ActionSequence()
+        private ActionSequence()
         {
-            Reset();
+            _timeScale = 1f;
         }
         
         public ActionSequence SetOwner(object owner)
@@ -65,20 +70,25 @@ namespace ActionSequence
             _sequenceManager = sequenceManager;
             return this;
         }
-        public ActionSequence InitNodes(ActionClip[] nodes)
+        public ActionSequence InitClips(ActionClip[] clips)
         {
-            for (var i = 0; i < nodes.Length; i++)
+            for (var i = 0; i < clips.Length; i++)
             {
-                var node = nodes[i];
-                float duration = node.Duration;
-                if (node.Action is IModifyDuration modifyDuration)
-                {
-                    duration = modifyDuration.Duration;
-                }
-                _actions.Add(CreateTimeAction(node.Action, node.StartTime, duration));
-                TotalDuration = MathF.Max(TotalDuration, node.StartTime + duration);
+                var clip = clips[i];
+                AddClip(clip);
             }
             return this;
+        }
+
+        public void AddClip(ActionClip clip)
+        {
+            float duration = clip.Duration;
+            if (clip.Action is IModifyDuration modifyDuration)
+            {
+                duration = modifyDuration.Duration;
+            }
+            _timeActions.Add(CreateTimeAction(clip.Action, clip.StartTime, duration));
+            TotalDuration = MathF.Max(TotalDuration, clip.StartTime + duration);
         }
 
         private TimeAction CreateTimeAction(IAction action, float startTime, float duration)
@@ -89,12 +99,7 @@ namespace ActionSequence
             timeAction.Duration = duration;
             return timeAction;
         }
-
-        public ActionSequence Active()
-        {
-            IsActive = true;
-            return this;
-        }
+        
 
         public ActionSequence Play()
         {
@@ -104,15 +109,15 @@ namespace ActionSequence
 
         public void Tick(float deltaTime)
         {
-            if (!IsPlaying && IsActive) return;
+            if (!IsPlaying || IsDisposed) return;
             int completeCount = 0;
             float wasTimeElapsed = TimeElapsed;
             
             TimeElapsed += deltaTime * TimeScale;
             
-            for (int i = 0; i < _actions.Count; i++)
+            for (int i = 0; i < _timeActions.Count; i++)
             {
-                var action = _actions[i];
+                var action = _timeActions[i];
                 if (action.IsComplete)
                 {
                     completeCount++;
@@ -122,69 +127,102 @@ namespace ActionSequence
                 float startTime = action.StartTime;
                 float endTime = startTime + action.Duration;
 
-                if (startTime >= wasTimeElapsed && startTime <= TimeElapsed )
+                try
                 {
-                    if (action.Action is IStartAction startAction && !action.IsStarted)
+                    if (startTime >= wasTimeElapsed && startTime <= TimeElapsed )
                     {
-                        action.IsStarted = true;
-                        startAction.Start();
+                        if (action.Action is IStartAction startAction && !action.IsStarted)
+                        {
+                            action.IsStarted = true;
+                            startAction.Start();
+                        }
                     }
-                }
-                
-                if (TimeElapsed > startTime && TimeElapsed < endTime)
-                {
-                    if (action.Action is IUpdateAction updateAction)
+                    
+                    if (TimeElapsed > startTime && TimeElapsed < endTime)
                     {
-                        updateAction.Update(TimeElapsed - startTime,action.Duration);
+                        if (action.Action is IUpdateAction updateAction)
+                        {
+                            updateAction.Update(TimeElapsed - startTime,action.Duration);
+                        }
                     }
-                }
-                
-                if (endTime > wasTimeElapsed && endTime <= TimeElapsed)
-                {
-                    if (action.Action is IUpdateAction updateAction)
+                    
+                    if (endTime > wasTimeElapsed && endTime <= TimeElapsed || 
+                        action.Action is ICustomComplete { CanComplete: true })
                     {
-                        updateAction.Update(action.Duration,action.Duration);
-                    }
+                        if (action.Action is IUpdateAction updateAction)
+                        {
+                            updateAction.Update(action.Duration,action.Duration);
+                        }
 
-                    if (action.Action is ICompleteAction completeAction)
-                    {
-                        completeAction.Complete();
+                        if (action.Action is ICompleteAction completeAction)
+                        {
+                            completeAction.Complete();
+                        }
+                        action.IsComplete = true;
+                        completeCount++;
                     }
+                }
+                catch (Exception ex)
+                {
+                    // 标记发生错误
+                    HasError = true;
+                    LastException = ex;
                     action.IsComplete = true;
-                    completeCount++;
+                    action.HasError = true;
+                    action.Exception = ex;
+                    
+                    // 记录错误日志
+                    UnityEngine.Debug.LogError($"[ActionSequence] Error in action {i} (Type: {action.Action?.GetType().Name}): {ex.Message}\n{ex.StackTrace}");
+                    
+                    // 调用错误回调
+                    var tempOnError = onError;
+                    onError = null;
+                    tempOnError?.Invoke(ex);
+                    
+                    // 停止序列执行
+                    IsPlaying = false;
+                    InstanceId = -1;
+                    return;
                 }
             }
 
-            if (completeCount == _actions.Count)
+            if (completeCount == _timeActions.Count)
             {
                 IsComplete = true;
                 IsPlaying = false;
-                IsActive = false;
-                internalComplete?.Invoke();
-                onComplete?.Invoke();
+                InstanceId = -1;
+                var tempInternalComplete = internalComplete;
+                var tempOnComplete = onComplete;
+                internalComplete = null;
+                onComplete = null;
+                onError = null;
+                tempInternalComplete?.Invoke();
+                tempOnComplete?.Invoke();
             }
         }
 
         public void Reset()
         {
-            for (int i = 0; i < _actions.Count; i++)
+            for (int i = 0; i < _timeActions.Count; i++)
             {
-                _sequenceManager.Recycle(_actions[i].Action); 
-                _actions[i].Reset();
-                _sequenceManager.Recycle(_actions[i]);
+                _sequenceManager.Recycle(_timeActions[i].Action); 
+                _sequenceManager.Recycle(_timeActions[i]);
             }
-            _actions.Clear();
+            _timeActions.Clear();
             _timeScale = 1f;
             TimeElapsed = 0f;
             TotalDuration = 0f;
+            HasError = false;
+            LastException = null;
             onComplete = null;
+            onError = null;
             internalComplete = null;
             _sequenceManager = null;
         }
 
         public void Kill()
         {
-            IsActive = false;
+            InstanceId = -1;
         }
         
         public ActionSequence OnComplete(Action complete)
@@ -192,9 +230,15 @@ namespace ActionSequence
             onComplete = complete;
             return this;
         }
+        
+        public ActionSequence OnError(Action<Exception> error)
+        {
+            onError = error;
+            return this;
+        }
 
 
-        private class TimeAction : IPool
+        private sealed class TimeAction : IPool
         {
             public IAction Action;
             public float StartTime;
@@ -202,18 +246,25 @@ namespace ActionSequence
 
             public bool IsStarted;
             public bool IsComplete;
+            public bool HasError;
+            public Exception Exception;
 
             public TimeAction()
             {
-                Reset();
+                IsComplete = false;
+                IsStarted = false;
+                HasError = false;
+                Action = null;
+                Exception = null;
             }
 
             public void Reset()
             {
                 IsComplete = false;
                 IsStarted = false;
-                Action?.Reset();
+                HasError = false;
                 Action = null;
+                Exception = null;
             }
 
             public bool IsFromPool { get; set; }

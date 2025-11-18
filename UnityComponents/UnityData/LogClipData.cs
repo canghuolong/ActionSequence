@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     [Serializable]
     public class LogClipData : AActionClipData<LogAction>
@@ -9,7 +9,7 @@ namespace ActionSequence
         [ExposedField]
         public string prefix;
     }
-    public class LogAction : IPoolAction<LogClipData>,IStartAction,IUpdateAction
+    public class LogAction : IAction,IParam,IPool, IStartAction,IUpdateAction
     {
         private LogClipData _clipData;
         public void SetParams(object param)

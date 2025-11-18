@@ -6,7 +6,7 @@ using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
-namespace ActionSequence
+namespace ASQ
 {
     [CustomEditor(typeof(ActionSequenceComponent))]
     public class ActionSequenceComponentInspector : Editor
@@ -181,7 +181,7 @@ namespace ActionSequence
             if (_status == Status.Play)
             {
                 _currentTime = (float)EditorApplication.timeSinceStartup;
-                float deltaTime = (float)(_currentTime - _lastUpdateTime);
+                float deltaTime = _currentTime - _lastUpdateTime;
                 _lastUpdateTime = _currentTime;
                 _editorManager?.Tick(deltaTime);
             }
@@ -415,7 +415,9 @@ namespace ActionSequence
             Texture2D playIconTexture = EditorGUIUtility.IconContent("PlayButton").image as Texture2D;
             _btnCtrl.text = "";
             _btnCtrl.style.backgroundImage = playIconTexture;
+            #if !UNITY_2022_1_OR_NEWER
             _btnCtrl.style.unityBackgroundScaleMode = new StyleEnum<ScaleMode>(ScaleMode.ScaleToFit);
+            #endif
             _btnCtrl.style.unityBackgroundImageTintColor = new StyleColor(Color.green);
         }
 

@@ -1,6 +1,6 @@
 {
     "name": "ActionSequence.Editor",
-    "rootNamespace": "ActionSequence",
+    "rootNamespace": "ASQ",
     "references": [
         "GUID:8d39b690bf2349147a2234ec9852dd1f"
     ],

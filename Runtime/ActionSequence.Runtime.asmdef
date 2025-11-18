@@ -1,6 +1,6 @@
 {
     "name": "ActionSequence.Runtime",
-    "rootNamespace": "ActionSequence",
+    "rootNamespace": "ASQ",
     "references": [
         "GUID:49b49c76ee64f6b41bf28ef951cb0e50"
     ],

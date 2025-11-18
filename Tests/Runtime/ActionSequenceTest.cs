@@ -1,6 +1,6 @@
 using System.Collections;
+using ASQ;
 using NUnit.Framework;
-using ActionSequence;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -32,7 +32,7 @@ public class ActionSequenceTest
       };
 
       var genericAction = _sequenceManager.Fetch<GenericAction>();
-      genericAction.UpdateAct = (localTime) =>
+      genericAction.UpdateAct = (localTime, duration) =>
       {
          Debug.Log($"UpdateAction: {localTime}");
       };

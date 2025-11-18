@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace ActionSequence
+namespace ASQ
 {
     public class ActionSequenceManager : IDisposable
     {
@@ -12,10 +14,29 @@ namespace ActionSequence
         private readonly List<ActionSequence> _sequences = new();
         
         private readonly ObjectPool _objectPool = new();
+
+        private readonly IdGenerator _idGenerator = new();
+        
+        #if ENABLE_VIEW && UNITY_EDITOR
+
+        private Transform _debugRoot;
+        
+        #endif
         
         public ActionSequenceManager(string name = "Default")
         {
             Name = name;
+            
+            #if ENABLE_VIEW && UNITY_EDITOR
+
+            var newObj = new GameObject($"[{Name}]",typeof(ActionSequenceManagerBehaviour));
+            _debugRoot = newObj.transform;
+            newObj.transform.SetParent(ActionSequences.DebugRoot);
+            
+            var actionSequenceManagerBehaviour = newObj.GetComponent<ActionSequenceManagerBehaviour>();
+            actionSequenceManagerBehaviour.SetSequenceManager(this);
+            actionSequenceManagerBehaviour.SetPool(_objectPool);
+            #endif
         }
         
 
@@ -31,10 +52,12 @@ namespace ActionSequence
                 var sequence = _sequences[index];
                 sequence.Tick(deltaTime);
 
-                if (!sequence.IsActive)
+                if (sequence.IsDisposed)
                 {
-                    sequence.Reset();
-                    _sequences.RemoveAt(index);
+                    var sequenceCount = _sequences.Count;
+                    // 将最后一个元素移动到当前位置, 然后移除
+                    _sequences[index] = _sequences[sequenceCount-1];
+                    _sequences.RemoveAt(sequenceCount-1);
                     Recycle(sequence);
                 }
                 else
@@ -44,28 +67,41 @@ namespace ActionSequence
             }
         }
 
-        public ActionSequence AddSequence(ActionSequenceModel model, object owner, object source)
+        public ActionSequence AddSequence(ActionSequenceModel model, object owner = null, object source = null)
         {
             var sequence = Fetch<ActionSequence>();
             sequence.Id = model.id;
-            sequence.Init(this).InitNodes(model.clips).SetOwner(owner).SetParam(source).Active();
+            sequence.InstanceId = _idGenerator.GenerateInstanceId();
+            sequence.Init(this).InitClips(model.clips).SetOwner(owner).SetParam(source);
             _sequences.Add(sequence);
             return sequence;
         }
 
+        public ActionSequence Sequence()
+        {
+            var sequence = Fetch<ActionSequence>();
+            sequence.InstanceId = _idGenerator.GenerateInstanceId();
+            sequence.Init(this);
+            _sequences.Add(sequence);
+            return sequence;
+        }
+        
+
         public void Dispose()
         {
             _sequences.Clear();
+            #if ENABLE_VIEW && UNITY_EDITOR
+            
+            if (_debugRoot != null)
+            {
+                Object.Destroy(_debugRoot.gameObject);
+            }
+            #endif
         }
         
         public T Fetch<T>() where T : class
         {
             return _objectPool.Fetch<T>();
-        }
-        
-        public void Recycle<T>(T obj) where T : class
-        {
-            _objectPool.Recycle(obj);
         }
 
         public object Fetch(Type type)
@@ -74,6 +110,11 @@ namespace ActionSequence
         }
 
         public void Recycle(object obj)
+        {
+            _objectPool.Recycle(obj);
+        }
+        
+        public void Recycle<T>(T obj) where T : class
         {
             _objectPool.Recycle(obj);
         }

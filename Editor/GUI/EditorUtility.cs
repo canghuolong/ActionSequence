@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     public static partial class EditorUtility
     {

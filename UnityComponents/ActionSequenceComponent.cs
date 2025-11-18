@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace ActionSequence
+namespace ASQ
 {
     public class ActionSequenceComponent : MonoBehaviour
     {
@@ -16,16 +16,17 @@ namespace ActionSequence
         
         public ActionSequence Play()
         {
-            if (TryGeneratorSequence())
+            if (TryGenerateSequence() && _actionSequence != null)
             {
                  _actionSequence.internalComplete += InternalStop;
+                 return !_actionSequence.IsPlaying ? _actionSequence.Play() : _actionSequence;
             }
-            return !_actionSequence.IsPlaying ? _actionSequence.Play() : _actionSequence;
+            return _actionSequence;
         }
         
         internal void Stop()
         {
-            if (_actionSequence is { IsActive: true })
+            if(_actionSequence is { IsDisposed: false })
             {
                 _actionSequence.Kill();    
             }
@@ -34,7 +35,7 @@ namespace ActionSequence
 
         private void InternalStop()
         {
-            if (_actionSequence is { IsActive: true })
+            if(_actionSequence is { IsDisposed: false })
             {
                 _actionSequence.Kill();    
             }
@@ -47,7 +48,7 @@ namespace ActionSequence
             _actionSequence = null;
         }
 
-        private bool TryGeneratorSequence()
+        private bool TryGenerateSequence()
         {
             if (_actionSequence == null)
             {
@@ -57,16 +58,14 @@ namespace ActionSequence
                 {
                     var actionClip = actionClips[i];
                     if(!actionClip.isActive)continue;
-                    var action =
-                        ActionSequences.CreateAction(actionClip.GetActionType()) as IAction<AActionClipData>;
-                    if (action != null)
+
+                    var action = (IAction)ActionSequences.GetDefaultActionSequenceManager().Fetch(actionClip.GetActionType());
+                    
+                    if (action is IParam paramAction)
                     {
-                        action.SetParams(actionClip);    
+                        paramAction.SetParams(actionClip);
                     }
-                    else
-                    {
-                        Debug.LogError($"ActionSequenceComponent: type convert error {actionClip.GetActionType()}");
-                    }
+                   
                     clipList.Add(new ActionClip()
                     {
                         Action = action,
@@ -80,7 +79,7 @@ namespace ActionSequence
                 
                 if (_actionSequenceManager == null)
                 {
-                    _actionSequence = ActionSequences.AddSequence(new ActionSequenceModel()
+                    _actionSequence = ActionSequences.GetDefaultActionSequenceManager().AddSequence(new ActionSequenceModel()
                     {
                         id = $"ActionSequenceComponent_{gameObject.name}",
                         clips = clips
