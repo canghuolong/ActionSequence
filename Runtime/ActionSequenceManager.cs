@@ -23,12 +23,12 @@ namespace ASQ
         
         #endif
         
-        public ActionSequenceManager(string name = "Default")
+        public ActionSequenceManager(string name = "Default",bool createDebugRoot = true)
         {
             Name = name;
             
             #if ENABLE_VIEW && UNITY_EDITOR
-
+            if (!createDebugRoot) return;
             var newObj = new GameObject($"[{Name}]",typeof(ActionSequenceManagerBehaviour));
             _debugRoot = newObj.transform;
             newObj.transform.SetParent(ActionSequences.DebugRoot);
@@ -36,7 +36,7 @@ namespace ASQ
             var actionSequenceManagerBehaviour = newObj.GetComponent<ActionSequenceManagerBehaviour>();
             actionSequenceManagerBehaviour.SetSequenceManager(this);
             actionSequenceManagerBehaviour.SetPool(_objectPool);
-            #endif
+#endif
         }
         
 

@@ -145,7 +145,7 @@ namespace ASQ
 
         private void OnEnable()
         {
-            _editorManager = new ActionSequenceManager();
+            _editorManager = new ActionSequenceManager("Editor", false);
             _actionClipsProperty = serializedObject.FindProperty("actionClips");
 
             EditorApplication.update -= EditorUpdate;
@@ -171,7 +171,11 @@ namespace ASQ
 
         private void OnDisable()
         {
-            _actionSequenceComponent.Stop();
+            if (!EditorApplication.isPlaying)
+            {
+                _actionSequenceComponent.Stop();    
+            }
+            
             EditorApplication.update -= EditorUpdate;
             EditorApplication.update -= RuntimeUpdate;
         }
