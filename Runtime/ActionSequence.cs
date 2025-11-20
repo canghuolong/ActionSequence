@@ -236,6 +236,36 @@ namespace ASQ
             onError = error;
             return this;
         }
+        
+        public bool TryFindAction<T>(out T action) where T : IAction
+        {
+            for (int i = 0; i < _timeActions.Count; i++)
+            {
+                var timeAction = _timeActions[i];
+                if (timeAction.Action is T matchedAction )
+                {
+                    action = matchedAction;
+                    return true;
+                }
+            }
+            action = default;
+            return false;
+        }
+
+        public bool TryFindAction<T>(string identifier,out T action) where T : IActionWithId
+        {
+            for (int i = 0; i < _timeActions.Count; i++)
+            {
+                var timeAction = _timeActions[i];
+                if (timeAction.Action is T matchedAction && matchedAction.Identifier == identifier)
+                {
+                    action = matchedAction;
+                    return true;
+                }
+            }
+            action = default;
+            return false;
+        }
 
 
         private sealed class TimeAction : IPool

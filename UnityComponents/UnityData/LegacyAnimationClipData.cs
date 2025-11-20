@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace ASQ
@@ -12,6 +13,11 @@ namespace ASQ
         [ExposedField]
         public string clipName;
 
+        [ExposedField]
+        public float startClipTime = -1f;
+        [ExposedField]
+        public float endClipTime = -1f;
+
     }
     public class LegacyAnimationAction : IAction,IPool,IParam,IStartAction,IUpdateAction,ICompleteAction
     {
@@ -19,6 +25,10 @@ namespace ASQ
 
         private float _animSpeed = -999f;
         private float _animLength = -1f;
+        
+        private float _startNormalTime;
+        private float _endNormalTime;
+        
         public void SetParams(object param)
         {
             _clipClipData = param as LegacyAnimationClipData;
@@ -29,13 +39,36 @@ namespace ASQ
             _animSpeed = -999f;
             _animLength = -1f;
         }
+
+        private float GetStartTime()
+        {
+            return _clipClipData.startClipTime >= 0 ? _clipClipData.startClipTime : 0f;
+        }
+
+        private float GetEndTime()
+        {
+            return _clipClipData.endClipTime >= 0 ? _clipClipData.endClipTime : 0f;
+        }
         
         public void Start()
         {
-            _clipClipData.animation.Play(_clipClipData.clipName);
-
-            _animLength = _clipClipData.animation[_clipClipData.clipName].length;
             
+            _clipClipData.animation.Play(_clipClipData.clipName);
+            
+            if (GetStartTime() > 0)
+            {
+                _clipClipData.animation[_clipClipData.clipName].time = _clipClipData.startClipTime;
+            }
+
+            var clipLength = _clipClipData.animation[_clipClipData.clipName].length;
+            
+            var startNormalTime = GetStartTime() / clipLength;
+            var endNormalTime = (clipLength - GetEndTime()) / clipLength;
+
+            _startNormalTime = startNormalTime;
+            _endNormalTime = endNormalTime;
+            
+            _animLength = clipLength - GetStartTime() - GetEndTime();
         }
 
         public void Update(float localTime, float duration)
@@ -52,7 +85,8 @@ namespace ASQ
             }
             else
             {
-                _clipClipData.animation[_clipClipData.clipName].normalizedTime = localTime/duration;
+                _clipClipData.animation[_clipClipData.clipName].normalizedTime = 
+                    _startNormalTime + localTime/duration * (_endNormalTime - _startNormalTime);
                 _clipClipData.animation.Sample();    
             }
             

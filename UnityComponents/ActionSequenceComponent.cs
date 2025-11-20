@@ -24,7 +24,7 @@ namespace ASQ
             return _actionSequence;
         }
         
-        internal void Stop()
+        public void Stop()
         {
             if(_actionSequence is { IsDisposed: false })
             {
@@ -48,6 +48,11 @@ namespace ASQ
             _actionSequence = null;
         }
 
+        private ActionSequenceManager GetSequenceManager()
+        {
+            return _actionSequenceManager ?? ActionSequences.GetDefaultActionSequenceManager();
+        }
+
         private bool TryGenerateSequence()
         {
             if (_actionSequence == null)
@@ -59,7 +64,7 @@ namespace ASQ
                     var actionClip = actionClips[i];
                     if(!actionClip.isActive)continue;
 
-                    var action = (IAction)ActionSequences.GetDefaultActionSequenceManager().Fetch(actionClip.GetActionType());
+                    var action = (IAction)GetSequenceManager().Fetch(actionClip.GetActionType());
                     
                     if (action is IParam paramAction)
                     {
@@ -77,23 +82,12 @@ namespace ASQ
 
                 var clips = clipList.ToArray();
                 
-                if (_actionSequenceManager == null)
+                _actionSequence = GetSequenceManager().AddSequence(new ActionSequenceModel()
                 {
-                    _actionSequence = ActionSequences.GetDefaultActionSequenceManager().AddSequence(new ActionSequenceModel()
-                    {
-                        id = $"ActionSequenceComponent_{gameObject.name}",
-                        clips = clips
-                    });    
-                }
-                else
-                {
-                    _actionSequence = _actionSequenceManager.AddSequence(new ActionSequenceModel()
-                    {
-                        id = $"ActionSequenceComponent_{gameObject.name}",
-                        clips = clips
-                    },null,null);
-                }
-
+                    id = $"ActionSequenceComponent_{gameObject.name}",
+                    clips = clips
+                });   
+                
                 return true;
             }
 

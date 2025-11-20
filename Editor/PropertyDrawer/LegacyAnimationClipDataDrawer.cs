@@ -34,8 +34,14 @@ namespace ASQ
                 {
                     return;
                 }
+                
+                var v = property.FindPropertyRelative("startClipTime").floatValue;
+                var v2 = property.FindPropertyRelative("endClipTime").floatValue;
+                
+                v = Mathf.Clamp(v,0,clip.length);
+                v2 = Mathf.Clamp(v2,0,clip.length);
 
-                property.FindPropertyRelative("duration").floatValue = clip.length;
+                property.FindPropertyRelative("duration").floatValue = clip.length - v - v2;
             }
         }
 

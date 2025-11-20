@@ -4,6 +4,10 @@
     public interface IAction
     {
     }
+    public interface IActionWithId : IAction
+    {
+        string Identifier { get; set; }
+    }
     
     public interface IModifyDuration
     {
